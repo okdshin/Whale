@@ -84,7 +84,8 @@ auto TestBigNaturalMultiply() -> void {
 		BigNatural("65535")*BigNatural("65535")), "{65534 1}");	
 	BigNatural num(BigNatural::FigureList(2, 65535));
 	//num.Output(std::cout);
-	num * num;
+	std::cout << BigNatural::MultiplyBySimple(num, num) << std::endl;
+	std::cout << BigNatural::MultiplyByFft(num, num) << std::endl;
 	//(BigNatural("1")*BigNatural("100000000000000")).Output(std::cout);	
 	/*
 	BigNatural("67890123456");

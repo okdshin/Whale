@@ -68,6 +68,14 @@ public:
 	auto MultiplyByFft(BigNatural right) -> BigNatural&;
 	auto MultiplyBySimple(BigNatural right) -> BigNatural&;
 
+	static auto MultiplyByFft(BigNatural left, const BigNatural& right) -> BigNatural {
+		return 	left.MultiplyByFft(right);
+	}
+	
+	static auto MultiplyBySimple(BigNatural left, const BigNatural& right) -> BigNatural {
+		return 	left.MultiplyBySimple(right);
+	}
+
 	auto AppendFigureLower(BaseType append_num) -> void;
 	auto AppendFigureUpper(BaseType append_num) -> void;
 	
