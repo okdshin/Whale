@@ -7,7 +7,9 @@
 #include <cassert>
 #include "FundamentalTypes.h"
 #include "Fftk/FastFourierTransform.h"
+#include "Fftk/Utility.h"
 #include "Fftk/Test/Test.h"
+#include "Fftk/Test/DiscreteFourierTransform.h"
 
 namespace whale{
 
@@ -19,17 +21,17 @@ public:
 	BigNatural(BaseType num);
 	BigNatural(const BigNatural&) = default;
 	auto operator=(const BigNatural&) -> BigNatural&  = default;
-	/*
 	BigNatural(BigNatural&& num){
 		figure_list_ = std::move(num.figure_list_);	
 	}
-	*/
 	auto operator=(BigNatural&& num) -> BigNatural& {
 		figure_list_ = std::move(num.figure_list_);	
 		return *this;
 	}
 	explicit BigNatural(const ByteArray& byte_array);
 	explicit BigNatural(const std::string& num_str);
+
+	explicit BigNatural(const FigureList& figure_list) : figure_list_(figure_list){}
 
 	auto Output(std::ostream& os)const -> void;
 	auto ToByteArray()const -> ByteArray;
@@ -43,21 +45,13 @@ public:
 
 	auto operator+=(BigNatural right) -> BigNatural&;
 	auto operator-=(BigNatural right) -> BigNatural&;
-	auto operator*=(BigNatural right) -> BigNatural&;
+	auto operator*=(const BigNatural& right) -> BigNatural&;
 	auto operator/=(const BigNatural& right) -> BigNatural&;
 	auto operator%=(const BigNatural& right) -> BigNatural&;
 	auto operator<<=(BaseType right) -> BigNatural&;
 	auto operator>>=(BaseType right) -> BigNatural&;
 	auto operator&=(BigNatural right) -> BigNatural&;
 	
-	auto ShiftLeftAlittle(unsigned int num) -> void;	
-	auto ShiftRightAlittle(unsigned int num) -> void;
-
-	auto AppendFigureLower(BaseType append_num) -> void;
-	auto AppendFigureUpper(BaseType append_num) -> void;
-	
-	auto IsOdd()const -> bool;
-
 	auto operator+(BigNatural right)const -> BigNatural;
 	auto operator-(const BigNatural& right)const -> BigNatural;
 	auto operator*(BigNatural right)const -> BigNatural;
@@ -67,6 +61,16 @@ public:
 	auto operator>>(BaseType right)const -> BigNatural;
 	auto operator&(BigNatural right)const -> BigNatural;
 
+	auto IsOdd()const -> bool;
+	auto ShiftLeftAlittle(unsigned int num) -> void;	
+	auto ShiftRightAlittle(unsigned int num) -> void;
+
+	auto MultiplyByFft(BigNatural right) -> BigNatural&;
+	auto MultiplyBySimple(BigNatural right) -> BigNatural&;
+
+	auto AppendFigureLower(BaseType append_num) -> void;
+	auto AppendFigureUpper(BaseType append_num) -> void;
+	
 	static auto DivideModulate(const BigNatural& left, const BigNatural& right) 
 			-> std::pair<BigNatural, BigNatural>;
 
@@ -253,14 +257,10 @@ BigNatural::BigNatural(const std::string& num_str) : figure_list_() {
 		}
 		*this += dec_figure*BigNatural(x);
 		dec_figure *= 10;
-	}	
+	}
 }
 
 auto BigNatural::Output(std::ostream& os)const -> void {
-	/*
-	os << "capa/size=" << figure_list_.capacity()/figure_list_.size() << ":";
-	os << "capa=" << figure_list_.capacity() << ":";
-	*/
 	os << "{";
 	for(int i = figure_list_.size()-1; i >= 0; --i){
 		os << figure_list_[i];
@@ -367,40 +367,44 @@ auto BigNatural::operator+=(BigNatural right) -> BigNatural& {
 	return *this;
 }
 
-auto BigNatural::operator*=(BigNatural right) -> BigNatural& {
-	auto big_natural_fft = [](const FigureList& figure_list) {
-		unsigned int bit_num = figure_list.size()*BASE_BIT_NUM;
-		unsigned int signal_len = 1;
-		while(bit_num > signal_len){
-			signal_len <<= 1;
-		}
-		signal_len <<= 1;
+auto BigNatural::MultiplyByFft(BigNatural right) -> BigNatural& {
+	auto big_natural_fft = [](FigureList figure_list) {
 		std::vector<std::complex<double>> signal(
-			signal_len, std::complex<double>(0., 0.));
+			figure_list.size(), std::complex<double>(0., 0.));
 		for(unsigned int i = 0; i < figure_list.size(); ++i){
 			signal[i] = std::complex<double>(
 				static_cast<double>(figure_list[i]), 0.);	
 		}
-		fftk::FastFourierTransform fft((fftk::SignalLength(signal_len)));
+		fftk::FastFourierTransform fft((fftk::SignalLength(figure_list.size())));
+		//fftk::DiscreteFourierTransform fft;
 		return fft.Transform(signal);
-		//return signal;
 	};
-	right.figure_list_.resize(right.figure_list_.size()*2);
-	figure_list_.resize(figure_list_.size()*2);
-	auto right_f = big_natural_fft(right.figure_list_);
+	unsigned int longer_size = std::max(figure_list_.size(), right.figure_list_.size());
+	unsigned int signal_length = fftk::NearestSquareLength(longer_size*2);
+	figure_list_.resize(signal_length, 0);
+	right.figure_list_.resize(signal_length, 0);
 	auto left_f = big_natural_fft(figure_list_);
-	//fftk::AbsOutput(std::cout, right_f);
-	//fftk::AbsOutput(std::cout, left_f);
-	//TODO
+	auto right_f = big_natural_fft(right.figure_list_);
 	for(unsigned int i = 0; i < right_f.size(); ++i){
 		left_f[i] *= right_f[i];
 	}
 	fftk::FastFourierTransform fft((fftk::SignalLength(left_f.size())));
 	auto ans = fft.InverseTransform(left_f);
-	fftk::Output(std::cout, ans);
-	
+	figure_list_.resize(left_f.size()+1);
+	std::fill(figure_list_.begin(), figure_list_.end(), 0);
+	for(unsigned int i = 0; i < ans.size(); ++i){
+		std::cout << "figure_list_: " << figure_list_[i] << std::endl;
+		std::cout << "ans[i].real(): " << ans[i].real() << std::endl;
+		assert(static_cast<double>(figure_list_[i])+ans[i].real() < 4294967296.0);
+		figure_list_[i] += static_cast<BaseType>(ans[i].real()+0.4);
+		figure_list_[i+1] += (figure_list_[i] >> BASE_BIT_NUM);
+		figure_list_[i] &= MAX_NUM;	
+	}
+	Normalize();
+	return *this;
+}
 
-	/*
+auto BigNatural::MultiplyBySimple(BigNatural right) -> BigNatural& {
 	FigureList res(figure_list_.size()+right.figure_list_.size());
 	for(unsigned int i = 0; i < figure_list_.size(); ++i){
 		BaseType carry = 0;
@@ -413,9 +417,18 @@ auto BigNatural::operator*=(BigNatural right) -> BigNatural& {
 	}
 	figure_list_ = res;
 	Normalize();
-	*/
 	return *this;
-	
+}
+
+auto BigNatural::operator*=(const BigNatural& right) -> BigNatural& {
+#ifdef MULTIPLY_FFT
+	return MultiplyByFft(right);
+#endif
+#ifdef MULTIPLY_SIMPLE
+	return MultiplyBySimple(right);
+#endif
+	assert(!"no multiply algorithm choiced");
+	return *this;
 }
 
 auto BigNatural::operator<<=(BaseType right) -> BigNatural& {

@@ -1,5 +1,5 @@
-CXX = g++ -pg -std=gnu++11
-CXXFLAGS = -O3 -Wall -g -D BIGNATURAL_UNIT_TEST -D__STRICT_ANSI__
+CXX = g++ -pg -std=gnu++11 -D_GLIBCXX_DEBUG
+CXXFLAGS = -O3 -Wall -g -D BIGNATURAL_UNIT_TEST -D__STRICT_ANSI__ -DMULTIPLY_FFT
 INCLUDES = 
 LIBS =
 OBJS = BigNatural.o
