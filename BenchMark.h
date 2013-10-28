@@ -3,6 +3,7 @@
 #include <iostream>
 #include <ctime>
 #include <string>
+#define MULTIPLY_SIMPLE
 #include "BigNatural.h"
 namespace whale
 {
