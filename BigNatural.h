@@ -406,12 +406,15 @@ auto BigNatural::MultiplyByFft(BigNatural right) -> BigNatural& {
 	figure_list_.resize(left_f.size()+1);
 	std::fill(figure_list_.begin(), figure_list_.end(), 0);
 	for(unsigned int i = 0; i < ans.size(); ++i){
-		std::cout << "figure_list_: " << figure_list_[i] << std::endl;
-		std::cout << "ans[i].real(): " << ans[i].real() << std::endl;
-		assert(static_cast<double>(figure_list_[i])+ans[i].real() < 4294967296.0);
-		figure_list_[i] += static_cast<BaseType>(ans[i].real()+0.4);
-		figure_list_[i+1] += (figure_list_[i] >> BASE_BIT_NUM);
-		figure_list_[i] &= MAX_NUM;	
+		//std::cout << "figure_list_: " << figure_list_[i] << std::endl;
+		//std::cout << "ans[i].real(): " << ans[i].real() << std::endl;
+		//assert(ans[i].real() < 4294967296.0);
+		auto addee = static_cast<unsigned long long>(ans[i].real()+0.4);
+		figure_list_[i+1] += 
+			(figure_list_[i] >> BASE_BIT_NUM) + (addee >> BASE_BIT_NUM)
+			+(((figure_list_[i]&MAX_NUM)+(addee&MAX_NUM)) >> BASE_BIT_NUM);
+		figure_list_[i] &= MAX_NUM;
+		figure_list_[i] += (addee&MAX_NUM);
 	}
 	Normalize();
 	return *this;
