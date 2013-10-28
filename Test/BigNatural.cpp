@@ -84,10 +84,17 @@ auto TestBigNaturalMultiply() -> void {
 	WHALE_CHECK_EQUAL(BigNatural("1234567890")*BigNatural("1234567890"), BigNatural("1524157875019052100"));	
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
 		BigNatural("65535")*BigNatural("65535")), "{65534 1}");	
-	BigNatural num(BigNatural::FigureList(2, 65535));
+	BigNatural num(BigNatural::FigureList(3, 65535));
 	//num.Output(std::cout);
-	std::cout << BigNatural::MultiplyBySimple(num, num) << std::endl;
-	std::cout << BigNatural::MultiplyByFft(num, num) << std::endl;
+	std::cout << num << std::endl;
+	std::cout << "simple:\t\t" << BigNatural::MultiplyBySimple(num, num) << std::endl;
+	std::cout << "karatsuba:\t" << BigNatural::MultiplyByKaratsuba(num, num) << std::endl;
+	/*
+	std::cout << "simple:\t\t" << BigNatural::MultiplyBySimple(num, 3) << std::endl;
+	std::cout << "karatsuba:\t" << BigNatural::MultiplyByKaratsuba(num, 3) << std::endl;
+	std::cout << "karatsuba:\t" << BigNatural::MultiplyByKaratsuba(65536, 56) << std::endl;
+	*/
+	//std::cout << BigNatural::MultiplyByFft(num, num) << std::endl;
 	//(BigNatural("1")*BigNatural("100000000000000")).Output(std::cout);	
 	/*
 	BigNatural("67890123456");
@@ -241,13 +248,16 @@ auto TestBigNaturalAppendFigure() -> void {
 
 int main(int argc, char* argv[])
 {
+	/*
 	TestBigNaturalConstructor1();
 	TestBigNaturalConstructor2();
 	TestBigNaturalConstructor3();
 	TestBigNaturalToByteArray();
 	TestBigNaturalPlus();
 	TestBigNaturalMinus();
+	*/
 	TestBigNaturalMultiply();
+	/*
 	TestBigNaturalDivide();
 	//TestBigNaturalShiftAlittle();
 	TestBigNaturalShift();
@@ -259,6 +269,7 @@ int main(int argc, char* argv[])
 	TestBigNaturalPowerModulate2();
 	TestBigNaturalOutput();
 	//TestBigNaturalInput();
+	*/
 	return 0;
 }
 

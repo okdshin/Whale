@@ -436,9 +436,66 @@ auto BigNatural::MultiplyBySimple(BigNatural right) -> BigNatural& {
 	return *this;
 }
 
+auto BigNatural::MultiplyByKaratsuba(BigNatural right) -> BigNatural& {
+	unsigned int longer_size = std::max(figure_list_.size(), right.figure_list_.size());
+	unsigned int square_size = 1;
+	while(longer_size > square_size){
+		square_size <<= 1;	
+	}
+	figure_list_.resize(square_size);
+	right.figure_list_.resize(square_size);
+
+	std::vector<BigNatural> dst;
+	std::vector<BigNatural> src(square_size, 0);
+	for(unsigned int i = 0; i < square_size; ++i){
+		src[i] = BigNatural(figure_list_[i] * right.figure_list_[i]);
+	}
+
+	for(unsigned int level = 0; src.size() != 1; ++level){
+		for(auto& s : src){
+			//std::cout << s << " ";
+			s.Output(std::cout);
+		}
+		std::cout << std::endl;
+		for(unsigned int i = 0; i < src.size(); i+=2){
+			BigNatural p = Power(BigNatural(BASE_NUM), 1 << level);
+			BigNatural a0(FigureList(
+				figure_list_.begin()+i, 
+				figure_list_.begin()+i+(1<<level)));
+			BigNatural a1(FigureList(
+				figure_list_.begin()+i+(1<<level), 
+				figure_list_.begin()+i+(2<<level)));
+			BigNatural b0(FigureList(
+				right.figure_list_.begin()+i, 
+				right.figure_list_.begin()+i+(1<<level)));
+			BigNatural b1(FigureList(
+				right.figure_list_.begin()+i+(1<<level), 
+				right.figure_list_.begin()+i+(2<<level)));
+			std::cout << "i:" << i << std::endl;
+			b1.Output(std::cout << "b1");
+			b0.Output(std::cout << "b0");
+			a1.Output(std::cout << "a1");
+			a0.Output(std::cout << "a0");
+			std::cout << std::endl;
+			BigNatural multiplied = 
+				MultiplyBySimple(src[i+1], MultiplyBySimple(p, p))+
+				MultiplyBySimple((MultiplyBySimple(a0+a1, b0+b1)-src[i+1]-src[i]), p)+
+				src[i];
+			dst.push_back(multiplied);
+		}
+		std::swap(dst, src);
+		dst.clear();
+	}
+	*this = src.front();
+	return *this;
+}
+
 auto BigNatural::operator*=(const BigNatural& right) -> BigNatural& {
 #ifdef MULTIPLY_FFT
 	return MultiplyByFft(right);
+#endif
+#ifdef MULTIPLY_KARATSUBA
+	return MultiplyByKaratsuba(right);
 #endif
 #ifdef MULTIPLY_SIMPLE
 	return MultiplyBySimple(right);
