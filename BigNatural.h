@@ -515,6 +515,11 @@ auto BigNatural::operator<<=(BaseType right) -> BigNatural& {
 auto BigNatural::operator>>=(BaseType right) -> BigNatural& {
 	BaseType erase_num = right/BASE_BIT_NUM;
 	right %= BASE_BIT_NUM;
+	if(erase_num >= figure_list_.size()){
+		*this = 0;
+		Normalize();
+		return *this;
+	}
 	figure_list_.erase(figure_list_.begin(), figure_list_.begin()+erase_num);
 	ShiftRightAlittle(right);
 	return *this;
