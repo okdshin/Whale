@@ -25,8 +25,10 @@ auto TestBigNaturalConstructor2() -> void {
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("65535")), "{65535}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("65536")), "{1 0}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("65537")), "{1 1}");
-	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("1208925819614629174706176")), "{1 0 0 0 0 0}");
-	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("18446744073709551616")), "{1 0 0 0 0}");
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
+		BigNatural("1208925819614629174706176")), "{1 0 0 0 0 0}");
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
+		BigNatural("18446744073709551616")), "{1 0 0 0 0}");
 	/*
 	for(unsigned int i = 0; i < 4294967296; ++i){
 		std::ostringstream oss;

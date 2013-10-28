@@ -65,15 +65,20 @@ public:
 	auto ShiftLeftAlittle(unsigned int num) -> void;	
 	auto ShiftRightAlittle(unsigned int num) -> void;
 
-	auto MultiplyByFft(BigNatural right) -> BigNatural&;
 	auto MultiplyBySimple(BigNatural right) -> BigNatural&;
+	auto MultiplyByFft(BigNatural right) -> BigNatural&;
+	auto MultiplyByKaratsuba(BigNatural right) -> BigNatural&;
 
+	static auto MultiplyBySimple(BigNatural left, const BigNatural& right) -> BigNatural {
+		return 	left.MultiplyBySimple(right);
+	}
+	
 	static auto MultiplyByFft(BigNatural left, const BigNatural& right) -> BigNatural {
 		return 	left.MultiplyByFft(right);
 	}
 	
-	static auto MultiplyBySimple(BigNatural left, const BigNatural& right) -> BigNatural {
-		return 	left.MultiplyBySimple(right);
+	static auto MultiplyByKaratsuba(BigNatural left, const BigNatural& right) -> BigNatural {
+		return 	left.MultiplyByKaratsuba(right);
 	}
 
 	auto AppendFigureLower(BaseType append_num) -> void;
@@ -383,7 +388,7 @@ auto BigNatural::MultiplyByFft(BigNatural right) -> BigNatural& {
 			signal[i] = std::complex<double>(
 				static_cast<double>(figure_list[i]), 0.);	
 		}
-		fftk::FastFourierTransform fft((fftk::SignalLength(figure_list.size())));
+		fftk::FastFourierTransform fft(fftk::SignalLength(figure_list.size()));
 		//fftk::DiscreteFourierTransform fft;
 		return fft.Transform(signal);
 	};
