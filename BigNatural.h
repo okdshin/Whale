@@ -17,6 +17,8 @@ class BigNatural{
 public:
 	using BaseType = uint32_t;
 	using FigureList = std::vector<BaseType>;
+	//figure_list_'s begin ------------------> end
+	//            lower figure            upper figure
 
 	BigNatural(BaseType num);
 	BigNatural(const BigNatural&) = default;
