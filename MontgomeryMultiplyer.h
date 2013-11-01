@@ -93,22 +93,6 @@ private:
 			t >>= 1;
 		}
 		return res;
-		/*
-		BigNatural res(0);
-		BigNatural r = BigNatural(1) << n_len;
-		BigNatural t = 0;
-		BigNatural i = 1;
-		while(r > 1){
-			if(t%2 == 0){
-				t+=n;
-				res += i;
-			}
-			t /= 2;
-			r /= 2;
-			i *= 2;
-		}
-		return res;
-		*/
 	}
 
 	BigNatural n_;
