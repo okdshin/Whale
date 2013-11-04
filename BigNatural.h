@@ -55,7 +55,16 @@ public:
 	auto operator&(BigNatural right)const -> BigNatural;
 
 	auto MultiplyBySimple(BigNatural right) -> BigNatural&;
+	auto MultiplyByKaratsuba(BigNatural right) -> BigNatural&;
 	
+	static auto MultiplyBySimple(BigNatural left, const BigNatural& right) -> BigNatural {
+		return left.MultiplyBySimple(right);
+	}
+
+	static auto MultiplyByKaratsuba(BigNatural left, const BigNatural& right) -> BigNatural {
+		return left.MultiplyByKaratsuba(right);
+	}
+
 	auto IsOdd()const -> bool;
 
 	auto ShiftLeftAlittle(unsigned int num) -> void;	
@@ -346,6 +355,32 @@ auto BigNatural::MultiplyBySimple(BigNatural right) -> BigNatural& {
 	}
 	figure_list_ = res;
 	Normalize();
+	return *this;
+}
+
+auto BigNatural::MultiplyByKaratsuba(BigNatural right) -> BigNatural& {
+	int longer_size = std::max(figure_list_.size(), right.figure_list_.size());
+	if(longer_size & 1){
+		++longer_size;
+	}
+	figure_list_.resize(longer_size);
+	right.figure_list_.resize(longer_size);
+	BigNatural a0(FigureList(figure_list_.begin(), figure_list_.begin()+longer_size/2));
+	BigNatural a1(FigureList(figure_list_.begin()+longer_size/2, figure_list_.end()));
+	BigNatural b0(FigureList(right.figure_list_.begin(), 
+		right.figure_list_.begin()+longer_size/2));
+	BigNatural b1(FigureList(right.figure_list_.begin()+longer_size/2, 
+		right.figure_list_.end()));
+	BigNatural t0 = MultiplyBySimple(a0, b0);
+	BigNatural t2 = MultiplyBySimple(a1, b1);
+	BigNatural t1 = MultiplyBySimple(a0+a1, b0+b1)-t0-t2;
+	FigureList fl(longer_size/2, 0);
+	fl.push_back(1);
+	BigNatural p(fl);
+	FigureList fl2(longer_size, 0);
+	fl2.push_back(1);
+	BigNatural p2(fl2);
+	*this = t2*p2+t1*p+t0;
 	return *this;
 }
 

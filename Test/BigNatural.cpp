@@ -65,7 +65,7 @@ auto TestBigNaturalMinus() -> void {
 		BigNatural("65537")-BigNatural("2")), "{65535}");
 }
 
-auto TestBigNaturalMultiply() -> void {
+auto TestBigNaturalMultiplyBySimple() -> void {
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
 		BigNatural("65537")*BigNatural("65537")), "{1 2 1}");	
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
@@ -75,6 +75,18 @@ auto TestBigNaturalMultiply() -> void {
 		BigNatural("65535")*BigNatural("65535")), "{1 65534}");	
 	BigNatural num(BigNatural::FigureList({65535, 65535, 65535, 65535, 65535}));
 	BigNatural num2(BigNatural::FigureList({65535, 65535, 65535, 65535, 65535, 0,0,0}));
+}
+
+auto TestBigNaturalMultiplyByKaratsuba() -> void {
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural::MultiplyByKaratsuba(
+		BigNatural("65537"), BigNatural("65537"))), "{1 2 1}");	
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural::MultiplyByKaratsuba(
+		BigNatural("123456789"), BigNatural("123456789"))), "{41913 38712 9762 54}");	
+	WHALE_CHECK_EQUAL(BigNatural::MultiplyByKaratsuba(
+		BigNatural("1234567890"), BigNatural("1234567890")), BigNatural("1524157875019052100"));	
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural::MultiplyByKaratsuba(
+		BigNatural("65535"), BigNatural("65535"))), "{1 65534}");	
+
 }
 
 auto TestBigNaturalShiftAlittle() -> void {
@@ -201,7 +213,8 @@ int main(int argc, char* argv[])
 	TestBigNaturalToByteArray();
 	TestBigNaturalPlus();
 	TestBigNaturalMinus();
-	TestBigNaturalMultiply();
+	TestBigNaturalMultiplyBySimple();
+	TestBigNaturalMultiplyByKaratsuba();
 	TestBigNaturalDivide();
 	TestBigNaturalShiftAlittle();
 	TestBigNaturalShift();
