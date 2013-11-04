@@ -1,5 +1,5 @@
 CXX = g++ -std=gnu++11 
-CXXFLAGS = -g -Wall -D BENCHMARK_UNIT_TEST
+CXXFLAGS = -O3 -pg -g -Wall -D BENCHMARK_UNIT_TEST
 INCLUDES = 
 LIBS =
 OBJS = BenchMark.o

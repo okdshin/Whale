@@ -6,10 +6,6 @@
 #include <utility>
 #include <cassert>
 #include "FundamentalTypes.h"
-#include "Fftk/FastFourierTransform.h"
-#include "Fftk/Utility.h"
-#include "Fftk/Test/Test.h"
-#include "Fftk/Test/DiscreteFourierTransform.h"
 
 namespace whale{
 
@@ -23,19 +19,14 @@ public:
 	BigNatural(BaseType num);
 	BigNatural(const BigNatural&) = default;
 	auto operator=(const BigNatural&) -> BigNatural&  = default;
-	BigNatural(BigNatural&& num){
-		figure_list_ = std::move(num.figure_list_);	
-	}
-	auto operator=(BigNatural&& num) -> BigNatural& {
-		figure_list_ = std::move(num.figure_list_);	
-		return *this;
-	}
+	
+	explicit BigNatural(const FigureList& figure_list);
+
 	explicit BigNatural(const ByteArray& byte_array);
 	explicit BigNatural(const std::string& num_str);
 
-	explicit BigNatural(const FigureList& figure_list) : figure_list_(figure_list){}
-
 	auto Output(std::ostream& os)const -> void;
+
 	auto ToByteArray()const -> ByteArray;
 
 	auto operator==(const BigNatural& right)const -> bool;
@@ -63,61 +54,26 @@ public:
 	auto operator>>(BaseType right)const -> BigNatural;
 	auto operator&(BigNatural right)const -> BigNatural;
 
+	auto MultiplyBySimple(BigNatural right) -> BigNatural&;
+	
 	auto IsOdd()const -> bool;
+
 	auto ShiftLeftAlittle(unsigned int num) -> void;	
 	auto ShiftRightAlittle(unsigned int num) -> void;
-
-	auto MultiplyBySimple(BigNatural right) -> BigNatural&;
-	auto MultiplyByFft(BigNatural right) -> BigNatural&;
-	auto MultiplyByKaratsuba(BigNatural right) -> BigNatural&;
-
-	static auto MultiplyBySimple(BigNatural left, const BigNatural& right) -> BigNatural {
-		return 	left.MultiplyBySimple(right);
-	}
-	
-	static auto MultiplyByFft(BigNatural left, const BigNatural& right) -> BigNatural {
-		return 	left.MultiplyByFft(right);
-	}
-	
-	static auto MultiplyByKaratsuba(BigNatural left, const BigNatural& right) -> BigNatural {
-		return 	left.MultiplyByKaratsuba(right);
-	}
 
 	auto AppendFigureLower(BaseType append_num) -> void;
 	auto AppendFigureUpper(BaseType append_num) -> void;
 	
+	static auto Power(BigNatural base, BigNatural exponent) -> BigNatural;
+
+	static auto PowerModulate(BigNatural base, BigNatural exponent, const BigNatural& n) 
+			-> BigNatural;
+	
 	static auto DivideModulate(const BigNatural& left, const BigNatural& right) 
 			-> std::pair<BigNatural, BigNatural>;
 
-	static auto Power(BigNatural base, BaseType exponent) -> BigNatural;
-	static auto Power(BigNatural base, BigNatural exponent) -> BigNatural;
-
-	static auto PowerModulate(BigNatural base, BaseType exponent, const BigNatural& n) -> BigNatural;
-	static auto PowerModulate(BigNatural base, BigNatural exponent, const BigNatural& n) -> BigNatural;
-	
-
-	friend auto operator>>(std::istream& is, BigNatural& val) -> std::istream& {
-		std::string num_str;
-		is >> num_str;
-		val = BigNatural(num_str);
-		return is;
-	}
-
-	friend auto operator<<(std::ostream& os, BigNatural val) -> std::ostream& {
-		std::vector<char> dec_figure_list;
-		while(val >= 10){
-			auto p = DivideModulate(val, 10);
-			val = p.first;
-			dec_figure_list.push_back(p.second.figure_list_.front());
-		}
-		dec_figure_list.push_back(val.figure_list_.front());
-		std::reverse(dec_figure_list.begin(), dec_figure_list.end());
-		for(auto dec_figure : dec_figure_list){
-			os << static_cast<unsigned int>(dec_figure);
-		}
-
-		return os;
-	}
+	friend auto operator>>(std::istream& is, BigNatural& val) -> std::istream&;
+	friend auto operator<<(std::ostream& os, BigNatural val) -> std::ostream&;
 
 private:
 	static const BaseType BASE_NUM = 65536;
@@ -127,6 +83,31 @@ private:
 
 	FigureList figure_list_;
 };
+	
+BigNatural::BigNatural(const FigureList& figure_list) : figure_list_(figure_list){}
+
+auto operator>>(std::istream& is, BigNatural& val) -> std::istream& {
+	std::string num_str;
+	is >> num_str;
+	val = BigNatural(num_str);
+	return is;
+}
+
+auto operator<<(std::ostream& os, BigNatural val) -> std::ostream& {
+	std::vector<char> dec_figure_list;
+	while(val >= 10){
+		auto p = BigNatural::DivideModulate(val, 10);
+		val = p.first;
+		dec_figure_list.push_back(p.second.figure_list_.front());
+	}
+	dec_figure_list.push_back(val.figure_list_.front());
+	std::reverse(dec_figure_list.begin(), dec_figure_list.end());
+	for(auto dec_figure : dec_figure_list){
+		os << static_cast<unsigned int>(dec_figure);
+	}
+
+	return os;
+}
 
 auto BigNatural::AppendFigureLower(BaseType append_num) -> void {
 	figure_list_.insert(figure_list_.begin(), append_num, 0);
@@ -172,23 +153,10 @@ auto BigNatural::DivideModulate(const BigNatural& left,
 	return std::make_pair(q, r);
 }
 
-
-auto BigNatural::Power(BigNatural base, BaseType exponent) -> BigNatural {
-	BigNatural res(1);
-	while(exponent > 0){
-		if(exponent&1){//IsOdd
-			res *= base;
-		}
-		exponent >>= 1;
-		base *= base;
-	}
-	return res;
-}
-
 auto BigNatural::Power(BigNatural base, BigNatural exponent) -> BigNatural {
 	BigNatural res(1);
 	while(exponent > 0){
-		if(exponent.figure_list_.front()&1){
+		if(exponent.IsOdd()){
 			res *= base;
 		}
 		exponent.ShiftRightAlittle(1);
@@ -197,28 +165,11 @@ auto BigNatural::Power(BigNatural base, BigNatural exponent) -> BigNatural {
 	return res;
 }
 
-
-auto BigNatural::PowerModulate(BigNatural base, 
-		BaseType exponent, const BigNatural& n) -> BigNatural {
-	BigNatural res(1);
-	while(exponent > 0){
-		if(exponent&1){//IsOdd
-			res *= base;
-			res %= n;
-		}
-		exponent >>= 1;
-		base *= base;
-		base %= n;
-	}
-	return res;
-}
-
-
 auto BigNatural::PowerModulate(BigNatural base, 
 		BigNatural exponent, const BigNatural& n) -> BigNatural {
 	BigNatural res(1);
 	while(exponent > 0){
-		if(exponent.figure_list_.front() & 1){
+		if(exponent.IsOdd()){
 			res *= base;
 			res %= n;
 		}
@@ -277,9 +228,9 @@ BigNatural::BigNatural(const std::string& num_str) : figure_list_() {
 
 auto BigNatural::Output(std::ostream& os)const -> void {
 	os << "{";
-	for(int i = figure_list_.size()-1; i >= 0; --i){
+	for(unsigned int i = 0; i < figure_list_.size(); ++i){
 		os << figure_list_[i];
-		if(i != 0){
+		if(i != figure_list_.size() -1){
 			os << " ";
 		}
 	}
@@ -382,46 +333,6 @@ auto BigNatural::operator+=(BigNatural right) -> BigNatural& {
 	return *this;
 }
 
-auto BigNatural::MultiplyByFft(BigNatural right) -> BigNatural& {
-	auto big_natural_fft = [](FigureList figure_list) {
-		std::vector<std::complex<double>> signal(
-			figure_list.size(), std::complex<double>(0., 0.));
-		for(unsigned int i = 0; i < figure_list.size(); ++i){
-			signal[i] = std::complex<double>(
-				static_cast<double>(figure_list[i]), 0.);	
-		}
-		fftk::FastFourierTransform fft(fftk::SignalLength(figure_list.size()));
-		//fftk::DiscreteFourierTransform fft;
-		return fft.Transform(signal);
-	};
-	unsigned int longer_size = std::max(figure_list_.size(), right.figure_list_.size());
-	unsigned int signal_length = fftk::NearestSquareLength(longer_size*2);
-	figure_list_.resize(signal_length, 0);
-	right.figure_list_.resize(signal_length, 0);
-	auto left_f = big_natural_fft(figure_list_);
-	auto right_f = big_natural_fft(right.figure_list_);
-	for(unsigned int i = 0; i < right_f.size(); ++i){
-		left_f[i] *= right_f[i];
-	}
-	fftk::FastFourierTransform fft((fftk::SignalLength(left_f.size())));
-	auto ans = fft.InverseTransform(left_f);
-	figure_list_.resize(left_f.size()+1);
-	std::fill(figure_list_.begin(), figure_list_.end(), 0);
-	for(unsigned int i = 0; i < ans.size(); ++i){
-		//std::cout << "figure_list_: " << figure_list_[i] << std::endl;
-		//std::cout << "ans[i].real(): " << ans[i].real() << std::endl;
-		//assert(ans[i].real() < 4294967296.0);
-		auto addee = static_cast<unsigned long long>(ans[i].real()+0.4);
-		figure_list_[i+1] += 
-			(figure_list_[i] >> BASE_BIT_NUM) + (addee >> BASE_BIT_NUM)
-			+(((figure_list_[i]&MAX_NUM)+(addee&MAX_NUM)) >> BASE_BIT_NUM);
-		figure_list_[i] &= MAX_NUM;
-		figure_list_[i] += (addee&MAX_NUM);
-	}
-	Normalize();
-	return *this;
-}
-
 auto BigNatural::MultiplyBySimple(BigNatural right) -> BigNatural& {
 	FigureList res(figure_list_.size()+right.figure_list_.size());
 	for(unsigned int i = 0; i < figure_list_.size(); ++i){
@@ -438,72 +349,8 @@ auto BigNatural::MultiplyBySimple(BigNatural right) -> BigNatural& {
 	return *this;
 }
 
-auto BigNatural::MultiplyByKaratsuba(BigNatural right) -> BigNatural& {
-	unsigned int longer_size = std::max(figure_list_.size(), right.figure_list_.size());
-	unsigned int square_size = 1;
-	while(longer_size > square_size){
-		square_size <<= 1;	
-	}
-	figure_list_.resize(square_size);
-	right.figure_list_.resize(square_size);
-
-	std::vector<BigNatural> dst;
-	std::vector<BigNatural> src(square_size, 0);
-	for(unsigned int i = 0; i < square_size; ++i){
-		src[i] = BigNatural(figure_list_[i] * right.figure_list_[i]);
-	}
-
-	for(unsigned int level = 0; src.size() != 1; ++level){
-		for(auto& s : src){
-			//std::cout << s << " ";
-			s.Output(std::cout);
-		}
-		std::cout << std::endl;
-		for(unsigned int i = 0; i < src.size(); i+=2){
-			BigNatural p = Power(BigNatural(BASE_NUM), 1 << level);
-			BigNatural a0(FigureList(
-				figure_list_.begin()+i, 
-				figure_list_.begin()+i+(1<<level)));
-			BigNatural a1(FigureList(
-				figure_list_.begin()+i+(1<<level), 
-				figure_list_.begin()+i+(2<<level)));
-			BigNatural b0(FigureList(
-				right.figure_list_.begin()+i, 
-				right.figure_list_.begin()+i+(1<<level)));
-			BigNatural b1(FigureList(
-				right.figure_list_.begin()+i+(1<<level), 
-				right.figure_list_.begin()+i+(2<<level)));
-			std::cout << "i:" << i << std::endl;
-			b1.Output(std::cout << "b1");
-			b0.Output(std::cout << "b0");
-			a1.Output(std::cout << "a1");
-			a0.Output(std::cout << "a0");
-			std::cout << std::endl;
-			BigNatural multiplied = 
-				MultiplyBySimple(src[i+1], MultiplyBySimple(p, p))+
-				MultiplyBySimple((MultiplyBySimple(a0+a1, b0+b1)-src[i+1]-src[i]), p)+
-				src[i];
-			dst.push_back(multiplied);
-		}
-		std::swap(dst, src);
-		dst.clear();
-	}
-	*this = src.front();
-	return *this;
-}
-
 auto BigNatural::operator*=(const BigNatural& right) -> BigNatural& {
-#ifdef MULTIPLY_FFT
-	return MultiplyByFft(right);
-#endif
-#ifdef MULTIPLY_KARATSUBA
-	return MultiplyByKaratsuba(right);
-#endif
-#ifdef MULTIPLY_SIMPLE
 	return MultiplyBySimple(right);
-#endif
-	assert(!"no multiply algorithm choiced");
-	return *this;
 }
 
 auto BigNatural::operator<<=(BaseType right) -> BigNatural& {

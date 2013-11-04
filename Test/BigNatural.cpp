@@ -16,30 +16,19 @@ auto BigNaturalToDebugString(const BigNatural& target) -> std::string {
 auto TestBigNaturalConstructor1() -> void {
 	WHALE_CHECK_EQUAL(BigNatural(300), 300);
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural(65535)), "{65535}");
-	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural(65536)), "{1 0}");
-	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural(65536*2)), "{2 0}");
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural(65536)), "{0 1}");
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural(65536*2)), "{0 2}");
 }
 
 auto TestBigNaturalConstructor2() -> void {
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("300")), "{300}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("65535")), "{65535}");
-	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("65536")), "{1 0}");
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("65536")), "{0 1}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural("65537")), "{1 1}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
-		BigNatural("1208925819614629174706176")), "{1 0 0 0 0 0}");
+		BigNatural("1208925819614629174706176")), "{0 0 0 0 0 1}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
-		BigNatural("18446744073709551616")), "{1 0 0 0 0}");
-	/*
-	for(unsigned int i = 0; i < 4294967296; ++i){
-		std::ostringstream oss;
-		oss << i;
-		std::cout << oss.str() << std::endl;
-		if(BigNatural(oss.str()) != BigNatural(i)){
-			std::cout << "error: " << i << std::endl;	
-			break;
-		}
-	}
-	*/
+		BigNatural("18446744073709551616")), "{0 0 0 0 1}");
 }
 
 auto TestBigNaturalConstructor3() -> void {
@@ -60,9 +49,9 @@ auto TestBigNaturalPlus() -> void {
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
 		BigNatural("300")+BigNatural("20")), "{320}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
-		BigNatural("65535")+BigNatural("65535")), "{1 65534}");
+		BigNatural("65535")+BigNatural("65535")), "{65534 1}");
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
-		BigNatural("65535")+BigNatural("65536")), "{1 65535}");
+		BigNatural("65535")+BigNatural("65536")), "{65535 1}");
 }
 
 auto TestBigNaturalMinus() -> void {
@@ -80,57 +69,15 @@ auto TestBigNaturalMultiply() -> void {
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
 		BigNatural("65537")*BigNatural("65537")), "{1 2 1}");	
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
-		BigNatural("123456789")*BigNatural("123456789")), "{54 9762 38712 41913}");	
+		BigNatural("123456789")*BigNatural("123456789")), "{41913 38712 9762 54}");	
 	WHALE_CHECK_EQUAL(BigNatural("1234567890")*BigNatural("1234567890"), BigNatural("1524157875019052100"));	
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(
-		BigNatural("65535")*BigNatural("65535")), "{65534 1}");	
-	BigNatural num(BigNatural::FigureList(3, 65535));
-	//num.Output(std::cout);
-	std::cout << num << std::endl;
-	std::cout << "simple:\t\t" << BigNatural::MultiplyBySimple(num, num) << std::endl;
-	std::cout << "karatsuba:\t" << BigNatural::MultiplyByKaratsuba(num, num) << std::endl;
-	/*
-	std::cout << "simple:\t\t" << BigNatural::MultiplyBySimple(num, 3) << std::endl;
-	std::cout << "karatsuba:\t" << BigNatural::MultiplyByKaratsuba(num, 3) << std::endl;
-	std::cout << "karatsuba:\t" << BigNatural::MultiplyByKaratsuba(65536, 56) << std::endl;
-	*/
-	//std::cout << BigNatural::MultiplyByFft(num, num) << std::endl;
-	//(BigNatural("1")*BigNatural("100000000000000")).Output(std::cout);	
-	/*
-	BigNatural("67890123456");
-	BigNatural("59999999999");
-	BigNatural("39999999999");
-	BigNatural("11111111112");
-	*/
-	/*
-	BigNatural num(1);
-	for(unsigned int i = 0; i < 100000; ++i){
-		//std::cout << num << std::endl;
-		num *= 10;
-		//num.Output(std::cout<<"aaaaa:");
-		//std::cout << "::" << num << std::endl;
-		//(BigNatural(1)*num).Output(std::cout<<"bbbbb:");
-		//std::cout << "::" << BigNatural(1)*num << std::endl;
-		//std::cout << "\n";
-		std::cout << i << std::endl;
-		assert(num == BigNatural(1)*num);
-	}
-	//num.Output(std::cout);
-	//std::cout << "::" << num << std::endl;
-	//(BigNatural("3")*num).Output(std::cout);
-	//std::cout << "::" << BigNatural(3)*num << std::endl;
-	*/
-	/*
-	auto num = BigNatural(BigNatural::FigureList({32768, 42182, 36222, 3}));
-	num.Output(std::cout);
-	std::cout << num << std::endl;
-	auto multiplied = BigNatural(1)*num;
-	multiplied.Output(std::cout);
-	std::cout << multiplied << std::endl;
-	*/
+		BigNatural("65535")*BigNatural("65535")), "{1 65534}");	
+	BigNatural num(BigNatural::FigureList({65535, 65535, 65535, 65535, 65535}));
+	BigNatural num2(BigNatural::FigureList({65535, 65535, 65535, 65535, 65535, 0,0,0}));
 }
 
-auto TestBigNaturalShiftAlttle() -> void {
+auto TestBigNaturalShiftAlittle() -> void {
 	BigNatural num = BigNatural("65535");
 	num.ShiftLeftAlittle(2);
 	WHALE_CHECK_EQUAL(num, BigNatural("65535")*4);	
@@ -248,28 +195,24 @@ auto TestBigNaturalAppendFigure() -> void {
 
 int main(int argc, char* argv[])
 {
-	/*
 	TestBigNaturalConstructor1();
 	TestBigNaturalConstructor2();
 	TestBigNaturalConstructor3();
 	TestBigNaturalToByteArray();
 	TestBigNaturalPlus();
 	TestBigNaturalMinus();
-	*/
 	TestBigNaturalMultiply();
-	/*
 	TestBigNaturalDivide();
-	//TestBigNaturalShiftAlittle();
+	TestBigNaturalShiftAlittle();
 	TestBigNaturalShift();
 	TestBigNaturalModulate();
-	//TestBigNaturalBitAnd();
+	TestBigNaturalBitAnd();
 	TestBigNaturalPower1();
-	//TestBigNaturalPower2();
+	TestBigNaturalPower2();
 	TestBigNaturalPowerModulate1();
 	TestBigNaturalPowerModulate2();
 	TestBigNaturalOutput();
 	//TestBigNaturalInput();
-	*/
 	return 0;
 }
 
