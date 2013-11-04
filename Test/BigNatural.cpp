@@ -180,10 +180,12 @@ auto TestBigNaturalPowerModulate2() -> void {
 }
 
 auto TestBigNaturalOutput() -> void {
-	std::cout << BigNatural("12345678910") << std::endl;
-	std::cout << BigNatural("1000000000") << std::endl;
-	std::cout << BigNatural("30")+BigNatural("300") << std::endl;
-	std::cout << BigNatural("30")-BigNatural("300") << std::endl;	
+	std::string num_str(
+		"340271982247993231302280370063965608744627311251456");
+	BigNatural num(num_str);
+	std::ostringstream oss;
+	oss << num;
+	WHALE_CHECK_EQUAL(oss.str(), num_str);
 }
 
 auto TestBigNaturalInput() -> void {
