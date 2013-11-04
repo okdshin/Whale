@@ -374,13 +374,9 @@ auto BigNatural::MultiplyByKaratsuba(BigNatural right) -> BigNatural& {
 	BigNatural t0 = MultiplyBySimple(a0, b0);
 	BigNatural t2 = MultiplyBySimple(a1, b1);
 	BigNatural t1 = MultiplyBySimple(a0+a1, b0+b1)-t0-t2;
-	FigureList fl(longer_size/2, 0);
-	fl.push_back(1);
-	BigNatural p(fl);
-	FigureList fl2(longer_size, 0);
-	fl2.push_back(1);
-	BigNatural p2(fl2);
-	*this = t2*p2+t1*p+t0;
+	t2.figure_list_.insert(t2.figure_list_.begin(), longer_size, 0);
+	t1.figure_list_.insert(t1.figure_list_.begin(), longer_size/2, 0);
+	*this = t2+t1+t0;
 	return *this;
 }
 
