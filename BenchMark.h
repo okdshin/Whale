@@ -18,22 +18,37 @@ private:
 
 };
 
-
 auto MultiplyBenchMark() -> void {
 	std::vector<BigNatural> num_list;
-	for(unsigned int i = 1; i < 10000; ++i){
-		num_list.push_back(i);
-		//std::cout << num_list.back() << "\n";
+	for(int i = 0; i < 20; ++i){
+		num_list.push_back((BigNatural(2) << i*500) -1);
 	}
 	for(unsigned int i = 0; i < num_list.size(); ++i){
-		std::cout << i << ":";
 		auto start = clock();
-		//auto num = BigNatural::MultiplyBySimple(num_list[i], num_list[i]);
-		auto num = num_list[i].MultiplyBySimple(num_list[i]);
+		for(unsigned int j = 0; j < 1; ++j){
+			//auto num = BigNatural::MultiplyByKaratsuba(BigNatural("12345678"), num_list[i]);
+			auto num = BigNatural::MultiplyBySimple(BigNatural("12345678"), num_list[i]);
+		}
 		auto end = clock();
-		std::cout<< "clock:" << end - start;
-		//num.Output(std::cout);
-		std::cout << num_list[i] << "**2:" << num << std::endl;//.Output(std::cout);
+		std::cout<< (i*500+1) << " " << end - start << std::endl;
+	}
+}
+
+auto MultiplyCheck() -> void {
+	std::vector<BigNatural> num_list;
+	for(unsigned int i = 1; i < 100000; ++i){
+		num_list.push_back(BigNatural(i)<<64);
+	}
+	for(unsigned int i = 0; i < num_list.size(); ++i){
+		auto start = clock();
+		auto num = BigNatural::MultiplyByKaratsuba(num_list[i]+1, num_list[i]);
+		auto end = clock();
+		if(num != BigNatural::MultiplyBySimple(num_list[i]+1, num_list[i])){
+			std::cout << "ERROR" << std::endl;
+			break;
+		}
+		std::cout << num_list[i] << "**2:" << num;//.Output(std::cout);
+		std::cout<< "clock:" << end - start << std::endl;
 	}
 }
 
