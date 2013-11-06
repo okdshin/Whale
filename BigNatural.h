@@ -61,8 +61,35 @@ public:
 		return left.MultiplyBySimple(right);
 	}
 
-	static auto MultiplyByKaratsuba(BigNatural left, const BigNatural& right) -> BigNatural {
-		return left.MultiplyByKaratsuba(right);
+	static auto MultiplyByKaratsuba(BigNatural left, BigNatural right) -> BigNatural {
+		unsigned int longer_size = 
+			std::max(left.figure_list_.size(), right.figure_list_.size());
+		unsigned int count = 0;
+		while(longer_size){
+			longer_size >>= 1;	
+			++count;
+		}
+		unsigned int sq_size = 1 << count;
+		std::cout << "sq_size: " << sq_size << std::endl;
+		left.figure_list_.resize(sq_size);
+		right.figure_list_.resize(sq_size);
+		FigureList result_figure_list(sq_size*2);
+
+		DoMultiplyByKaratsuba(&left.figure_list_.front(), &right.figure_list_.front(), 
+			left.figure_list_.size(), &result_figure_list.front());
+		
+		for(auto f : result_figure_list){
+			std::cout << f << " ";
+		}
+		std::cout << std::endl;
+		result_figure_list.push_back(0);
+		for(unsigned int i = 0; i < result_figure_list.size()-1; ++i){
+			result_figure_list[i+1] += result_figure_list[i] >> BASE_BIT_NUM;
+			result_figure_list[i] &= MAX_NUM;
+		}
+		BigNatural res(result_figure_list);
+		res.Normalize();
+		return res;
 	}
 
 	auto IsOdd()const -> bool;
@@ -85,6 +112,39 @@ public:
 	friend auto operator<<(std::ostream& os, BigNatural val) -> std::ostream&;
 
 private:
+	static auto DoMultiplyByKaratsuba(BaseType* a, BaseType* b, unsigned int len, BaseType* res) -> void {
+		if(len == 1){
+			for(unsigned int i = 0; i < len; ++i){
+				for(unsigned int j = 0; j < len; ++j){
+					res[i+j] = a[i]*b[j];
+				}	
+			}
+			return;
+		}
+		unsigned int half_len = len >> 1;
+		BaseType* a0 = &a[0];
+		BaseType* a1 = &a[half_len];
+		BaseType* b0 = &b[0];
+		BaseType* b1 = &b[half_len];
+		FigureList v(half_len);
+		FigureList w(half_len);
+		for(unsigned int i = 0; i < half_len; ++i){
+			v[i] = a1[i] + a0[i];
+			w[i] = b1[i] + b0[i];
+		}
+		BaseType* x0 = &res[half_len*0];
+		BaseType* x1 = &res[half_len*1];
+		BaseType* x2 = &res[half_len*2];
+		DoMultiplyByKaratsuba(a0, b0, half_len, x0);
+		DoMultiplyByKaratsuba(a1, b1, half_len, x2);
+		//FigureList x1(half_len);
+		DoMultiplyByKaratsuba(&v.front(), &w.front(), half_len, x1);
+		for(unsigned int i = 0; i < len; ++i){
+			x1[i] -= (x0[i]+x2[i]);	
+		}
+		//for(unsigned int i = 0; i < )
+	}
+
 	static const BaseType BASE_NUM = 65536;
 	static const BaseType BASE_BIT_NUM = 16;
 	static const BaseType MAX_NUM = 65535;

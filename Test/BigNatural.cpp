@@ -79,14 +79,16 @@ auto TestBigNaturalMultiplyBySimple() -> void {
 
 auto TestBigNaturalMultiplyByKaratsuba() -> void {
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural::MultiplyByKaratsuba(
+		BigNatural("2"), BigNatural("3"))), "{6}");	
+	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural::MultiplyByKaratsuba(
 		BigNatural("65537"), BigNatural("65537"))), "{1 2 1}");	
+	BigNatural::MultiplyByKaratsuba(BigNatural("65537"), BigNatural("65537")).Output(std::cout);
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural::MultiplyByKaratsuba(
 		BigNatural("123456789"), BigNatural("123456789"))), "{41913 38712 9762 54}");	
 	WHALE_CHECK_EQUAL(BigNatural::MultiplyByKaratsuba(
 		BigNatural("1234567890"), BigNatural("1234567890")), BigNatural("1524157875019052100"));	
 	WHALE_CHECK_EQUAL(BigNaturalToDebugString(BigNatural::MultiplyByKaratsuba(
 		BigNatural("65535"), BigNatural("65535"))), "{1 65534}");	
-
 }
 
 auto TestBigNaturalShiftAlittle() -> void {
@@ -209,6 +211,7 @@ auto TestBigNaturalAppendFigure() -> void {
 
 int main(int argc, char* argv[])
 {
+	/*
 	TestBigNaturalConstructor1();
 	TestBigNaturalConstructor2();
 	TestBigNaturalConstructor3();
@@ -216,7 +219,9 @@ int main(int argc, char* argv[])
 	TestBigNaturalPlus();
 	TestBigNaturalMinus();
 	TestBigNaturalMultiplyBySimple();
+	*/
 	TestBigNaturalMultiplyByKaratsuba();
+	/*
 	TestBigNaturalDivide();
 	TestBigNaturalShiftAlittle();
 	TestBigNaturalShift();
@@ -228,6 +233,7 @@ int main(int argc, char* argv[])
 	TestBigNaturalPowerModulate2();
 	TestBigNaturalOutput();
 	//TestBigNaturalInput();
+	*/
 	return 0;
 }
 
