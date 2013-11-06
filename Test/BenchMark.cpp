@@ -5,7 +5,12 @@ using namespace whale;
 
 int main(int argc, char* argv[])
 {
-	MultiplyBenchMark();
+	for(unsigned int i = 16; i < 4096; i+=500){
+		MultiplyBenchmark2(i);
+	}
+	//MultiplyCheck();
+	//MultiplyBenchMark();
+	/*
 	{
 	BigNatural num("18446462594437808126728384");
 	std::cout << num << std::endl;
@@ -29,7 +34,7 @@ int main(int argc, char* argv[])
 	std::cout << BigNatural::MultiplyBySimple(num, num) << std::endl;
 	std::cout << BigNatural::MultiplyByKaratsuba(num, num) << std::endl;
 	}
-
+	*/
     return 0;
 }
 

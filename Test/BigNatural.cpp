@@ -218,8 +218,8 @@ int main(int argc, char* argv[])
 	TestBigNaturalToByteArray();
 	TestBigNaturalPlus();
 	TestBigNaturalMinus();
-	TestBigNaturalMultiplyBySimple();
 	*/
+	TestBigNaturalMultiplyBySimple();
 	TestBigNaturalMultiplyByKaratsuba();
 	/*
 	TestBigNaturalDivide();

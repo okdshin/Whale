@@ -61,36 +61,10 @@ public:
 		return left.MultiplyBySimple(right);
 	}
 
-	static auto MultiplyByKaratsuba(BigNatural left, BigNatural right) -> BigNatural {
-		unsigned int longer_size = 
-			std::max(left.figure_list_.size(), right.figure_list_.size());
-		unsigned int count = 0;
-		while(longer_size){
-			longer_size >>= 1;	
-			++count;
-		}
-		unsigned int sq_size = 1 << count;
-		std::cout << "sq_size: " << sq_size << std::endl;
-		left.figure_list_.resize(sq_size);
-		right.figure_list_.resize(sq_size);
-		FigureList result_figure_list(sq_size*2);
-
-		DoMultiplyByKaratsuba(&left.figure_list_.front(), &right.figure_list_.front(), 
-			left.figure_list_.size(), &result_figure_list.front());
-		
-		for(auto f : result_figure_list){
-			std::cout << f << " ";
-		}
-		std::cout << std::endl;
-		result_figure_list.push_back(0);
-		for(unsigned int i = 0; i < result_figure_list.size()-1; ++i){
-			result_figure_list[i+1] += result_figure_list[i] >> BASE_BIT_NUM;
-			result_figure_list[i] &= MAX_NUM;
-		}
-		BigNatural res(result_figure_list);
-		res.Normalize();
-		return res;
+	static auto MultiplyByKaratsuba(BigNatural left, const BigNatural& right) -> BigNatural {
+		return left.MultiplyByKaratsuba(right);
 	}
+
 
 	auto IsOdd()const -> bool;
 
@@ -113,10 +87,10 @@ public:
 
 private:
 	static auto DoMultiplyByKaratsuba(BaseType* a, BaseType* b, unsigned int len, BaseType* res) -> void {
-		if(len == 1){
+		if(len <= 8){
 			for(unsigned int i = 0; i < len; ++i){
 				for(unsigned int j = 0; j < len; ++j){
-					res[i+j] = a[i]*b[j];
+					res[i+j] += a[i]*b[j];
 				}	
 			}
 			return;
@@ -126,23 +100,24 @@ private:
 		BaseType* a1 = &a[half_len];
 		BaseType* b0 = &b[0];
 		BaseType* b1 = &b[half_len];
-		FigureList v(half_len);
-		FigureList w(half_len);
+		BaseType* v = &res[len*5];
+		BaseType* w = &res[len*5+half_len];
 		for(unsigned int i = 0; i < half_len; ++i){
 			v[i] = a1[i] + a0[i];
 			w[i] = b1[i] + b0[i];
 		}
-		BaseType* x0 = &res[half_len*0];
-		BaseType* x1 = &res[half_len*1];
-		BaseType* x2 = &res[half_len*2];
+		BaseType* x0 = &res[0];
+		BaseType* x2 = &res[len];
+		BaseType* x1 = &res[len*2];
 		DoMultiplyByKaratsuba(a0, b0, half_len, x0);
 		DoMultiplyByKaratsuba(a1, b1, half_len, x2);
-		//FigureList x1(half_len);
-		DoMultiplyByKaratsuba(&v.front(), &w.front(), half_len, x1);
+		DoMultiplyByKaratsuba(v, w, half_len, x1);
 		for(unsigned int i = 0; i < len; ++i){
 			x1[i] -= (x0[i]+x2[i]);	
 		}
-		//for(unsigned int i = 0; i < )
+		for(unsigned int i = 0; i < len; ++i){
+			res[i+half_len] += x1[i];	
+		}
 	}
 
 	static const BaseType BASE_NUM = 65536;
@@ -153,7 +128,9 @@ private:
 	FigureList figure_list_;
 };
 	
-BigNatural::BigNatural(const FigureList& figure_list) : figure_list_(figure_list){}
+BigNatural::BigNatural(const FigureList& figure_list) : figure_list_(figure_list){
+	Normalize();
+}
 
 auto operator>>(std::istream& is, BigNatural& val) -> std::istream& {
 	std::string num_str;
@@ -187,6 +164,7 @@ auto BigNatural::AppendFigureUpper(BaseType append_num) -> void {
 }
 
 auto BigNatural::Normalize() -> void {
+	assert(!figure_list_.empty());
 	auto iter = figure_list_.end()-1; 
 	while(!(*iter) && iter != figure_list_.begin()){
 		--iter;
@@ -403,7 +381,7 @@ auto BigNatural::operator+=(BigNatural right) -> BigNatural& {
 }
 
 auto BigNatural::MultiplyBySimple(BigNatural right) -> BigNatural& {
-	FigureList res(figure_list_.size()+right.figure_list_.size());
+	FigureList res(figure_list_.size()+right.figure_list_.size());//TODO?
 	for(unsigned int i = 0; i < figure_list_.size(); ++i){
 		BaseType carry = 0;
 		for(unsigned int j = 0; j < right.figure_list_.size(); ++j){
@@ -412,40 +390,50 @@ auto BigNatural::MultiplyBySimple(BigNatural right) -> BigNatural& {
 			carry = val >> BASE_BIT_NUM;
 		}
 		res[i+right.figure_list_.size()] += carry;
+		assert(!res.empty());
 	}
-	figure_list_ = res;
+	std::swap(figure_list_, res);
 	Normalize();
 	return *this;
 }
 
 auto BigNatural::MultiplyByKaratsuba(BigNatural right) -> BigNatural& {
-	int longer_size = std::max(figure_list_.size(), right.figure_list_.size());
-	if(longer_size == 1){
-		*this = figure_list_.front()*right.figure_list_.front();	
-		return *this;
+	unsigned int longer_size = 
+		std::max(figure_list_.size(), right.figure_list_.size());
+	unsigned int count = 0;
+	while(longer_size){
+		longer_size >>= 1;	
+		++count;
 	}
-	longer_size = longer_size & 1 ? longer_size+1 : longer_size;
-	int half_size = longer_size >> 1;
-	figure_list_.resize(longer_size);
-	right.figure_list_.resize(longer_size);
-	BigNatural a0(FigureList(figure_list_.begin(), figure_list_.begin()+half_size));
-	BigNatural a1(FigureList(figure_list_.begin()+half_size, figure_list_.end()));
-	BigNatural b0(FigureList(right.figure_list_.begin(), 
-		right.figure_list_.begin()+half_size));
-	BigNatural b1(FigureList(right.figure_list_.begin()+half_size, 
-		right.figure_list_.end()));
-	BigNatural t0 = MultiplyByKaratsuba(a0, b0);
-	BigNatural t2 = MultiplyByKaratsuba(a1, b1);
-	BigNatural t1 = MultiplyByKaratsuba(a0+a1, b0+b1)-t0-t2;
-	t2.figure_list_.insert(t2.figure_list_.begin(), longer_size, 0);
-	t1.figure_list_.insert(t1.figure_list_.begin(), half_size, 0);
-	*this = t2+t1+t0;
+	unsigned int sq_size = 1 << count;
+	figure_list_.resize(sq_size);
+	right.figure_list_.resize(sq_size);
+	FigureList result_figure_list(sq_size*6);
+
+	DoMultiplyByKaratsuba(&figure_list_.front(), &right.figure_list_.front(), 
+		sq_size, &result_figure_list.front());
+	result_figure_list.erase(
+		result_figure_list.begin()+sq_size*2+1, result_figure_list.end());
+	
+	result_figure_list.back() = 0;
+	for(unsigned int i = 0; i < result_figure_list.size()-1; ++i){
+		result_figure_list[i+1] += result_figure_list[i] >> BASE_BIT_NUM;
+		result_figure_list[i] &= MAX_NUM;
+	}
+	std::swap(figure_list_, result_figure_list);
 	Normalize();
 	return *this;
 }
 
 auto BigNatural::operator*=(const BigNatural& right) -> BigNatural& {
+#ifdef MULTIPLY_KARATSUBA
+	return MultiplyByKaratsuba(right);
+#endif
+#ifdef MULTIPLY_SIMPLE
 	return MultiplyBySimple(right);
+#endif
+	return right.figure_list_.size() < 100 || figure_list_.size() < 100 ? 
+		MultiplyBySimple(right) : MultiplyByKaratsuba(right);
 }
 
 auto BigNatural::operator<<=(BaseType right) -> BigNatural& {
